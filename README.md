@@ -38,4 +38,4 @@ You can download a version with the test suite completed
 ## Solution
 You can check your solution with
 
-    git checkout tags/solved
+    git checkout tags/solution
