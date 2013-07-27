@@ -4,47 +4,66 @@ Item = (name, sellIn, quality) ->
   @quality = quality
 
 GildedRose = ->
-  console.log "OMGHAI!"
-  items = []
-  items.push new Item("+5 Dexterity Vest", 10, 20)
-  items.push new Item("Aged Brie", 2, 0)
-  items.push new Item("Elixir of the Mongoose", 5, 7)
-  items.push new Item("Sulfuras, Hand of Ragnaros", 0, 80)
-  items.push new Item("Backstage passes to a TAFKAL80ETC concert", 15, 20)
-  items.push new Item("Conjured Mana Cake", 3, 6)
-  GildedRose.updateQuality(items)
+  GildedRose.updateQuality [
+    new Item("+5 Dexterity Vest", 10, 20)
+    new Item("Aged Brie", 2, 0)
+    new Item("Elixir of the Mongoose", 5, 7)
+    new Item("Sulfuras, Hand of Ragnaros", 0, 80)
+    new Item("Backstage passes to a TAFKAL80ETC concert", 15, 20)
+    new Item("Conjured Mana Cake", 3, 6)
+  ]
 
 GildedRose.updateQuality = (items) ->
-  i = 0
-  while i < items.length
-    if ("Aged Brie" isnt items[i].name and "Backstage passes to a TAFKAL80ETC concert" isnt items[i].name)
-      if (items[i].quality > 0)
-        if ("Sulfuras, Hand of Ragnaros" isnt items[i].name)
-          items[i].quality = items[i].quality - 1
-    else
-      if (items[i].quality < 50)
-        items[i].quality = items[i].quality + 1
-        if ("Backstage passes to a TAFKAL80ETC concert" == items[i].name)
-          if (items[i].sellIn < 11)
-            if (items[i].quality < 50)
-              items[i].quality = items[i].quality + 1
-          if (items[i].sellIn < 6)
-            if (items[i].quality < 50)
-              items[i].quality = items[i].quality + 1
-
-    if ("Sulfuras, Hand of Ragnaros" isnt items[i].name)
-      items[i].sellIn = items[i].sellIn - 1
-
-    if (items[i].sellIn < 0)
-      if ("Aged Brie" isnt items[i].name)
-        if ("Backstage passes to a TAFKAL80ETC concert" isnt items[i].name)
-          if (items[i].quality > 0)
-            if ("Sulfuras, Hand of Ragnaros" isnt items[i].name)
-              items[i].quality = items[i].quality - 1
-        else
-          items[i].quality = items[i].quality - items[i].quality
-      else
-        if (items[i].quality < 50)
-          items[i].quality = items[i].quality + 1
-    i++
+  items.forEach(GildedRose.updateItem)
   items
+
+GildedRose.updateItem = (item) ->
+  i = ImprovedItemFactory.create(item)
+  i.update()
+  i.item
+
+class ImprovedItemFactory
+  @create: (item) ->
+    switch item.name
+      when "Aged Brie" then return new AgedItem(item)
+      when "Backstage passes to a TAFKAL80ETC concert" then return new BackstagePassItem(item)
+      when "Sulfuras, Hand of Ragnaros" then return new SulfurasItem(item)
+      else return new DefaultItem(item)
+
+class ImprovedItem
+  MAX_QUALITY = 50
+  MIN_QUALITY = 0
+  constructor: (@item) ->
+  increaseQuality: -> @item.quality++
+  decreaseQuality: -> @item.quality--
+  resetQuality: -> @item.quality = 0
+  isQualityBelowMax: -> @item.quality < MAX_QUALITY
+  isQualityOverMin: -> @item.quality > MIN_QUALITY
+  decreaseShellIn: -> @item.sellIn--
+  isShellInLowerThan: (num) -> @item.sellIn < num
+
+class AgedItem extends ImprovedItem
+  update: ->
+    @decreaseShellIn()
+    if @isQualityBelowMax()
+      @increaseQuality()
+      @increaseQuality() if @isShellInLowerThan(0)
+
+class BackstagePassItem extends ImprovedItem
+  update: ->
+    if @isQualityBelowMax()
+      @increaseQuality()
+      @increaseQuality() if @isShellInLowerThan(11)
+      @increaseQuality() if @isShellInLowerThan(6)
+    @decreaseShellIn()
+    @resetQuality() if @isShellInLowerThan(0)
+
+class SulfurasItem extends ImprovedItem
+  update: -> @decreaseShellIn()
+
+class DefaultItem extends ImprovedItem
+  update: ->
+    @decreaseShellIn()
+    if @isQualityOverMin()
+      @decreaseQuality()
+      @decreaseQuality() if @isShellInLowerThan(0)
