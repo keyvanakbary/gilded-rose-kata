@@ -33,9 +33,9 @@ Just for clarification, an item can never have its Quality increase above 50, ho
 ## Easy mode
 You can download a version with the test suite completed
 
-    git checkout tags/easy
+    git checkout easy
 
 ## Solution
 You can check your solution with
 
-    git checkout tags/solved
+    git checkout solution
